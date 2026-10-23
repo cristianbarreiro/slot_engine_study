@@ -1,5 +1,6 @@
 #include "slot_engine/evaluator.hpp"
 #include "slot_engine/game_engine.hpp"
+#include "slot_engine/game_session.hpp"
 #include "slot_engine/simulator.hpp"
 
 #include <cstdlib>
@@ -85,6 +86,51 @@ void test_zero_wager_is_safe() {
     expect(report.payout_rate_percent() == 0.0, "zero wager should not divide by zero");
 }
 
+void test_session_validates_bet_and_balance() {
+    slot_engine::GameConfig config{};
+    config.bet_per_spin = 0;
+    slot_engine::GameEngine engine(config, 11);
+    slot_engine::GameSession session(engine, 5);
+
+    const auto invalid_bet = session.spin();
+    expect(invalid_bet.status == slot_engine::SessionStatus::InvalidBet,
+           "session should reject a zero bet");
+    expect(session.balance() == 5, "invalid bet should not change the balance");
+    expect(!session.set_bet(6), "session should reject a bet above the balance");
+    expect(session.set_bet(5), "session should accept a positive affordable bet");
+    expect(!session.set_bet(0), "session should reject setting a zero bet");
+}
+
+void test_session_spin_updates_balance() {
+    slot_engine::GameConfig config{};
+    slot_engine::GameEngine engine(config, 42);
+    slot_engine::GameSession session(engine, 100);
+    expect(session.set_bet(3), "session should accept a changed bet");
+
+    const auto outcome = session.spin();
+    expect(outcome.completed(), "valid session spin should complete");
+    slot_engine::GameConfig expected_config{};
+    expected_config.bet_per_spin = 3;
+    const auto expected_spin = slot_engine::evaluate_spin(outcome.spin.reels, expected_config);
+    expect(outcome.spin.payout == expected_spin.payout,
+           "session bet should determine the evaluated payout");
+    expect(session.balance() == 97 + outcome.spin.payout,
+           "session should deduct the bet and credit the payout");
+    expect(outcome.balance == session.balance(), "outcome should report the updated balance");
+}
+
+void test_session_rejects_spin_when_balance_is_too_low() {
+    slot_engine::GameConfig config{};
+    config.bet_per_spin = 2;
+    slot_engine::GameEngine engine(config, 8);
+    slot_engine::GameSession session(engine, 1);
+
+    const auto outcome = session.spin();
+    expect(outcome.status == slot_engine::SessionStatus::InsufficientBalance,
+           "session should reject a spin that exceeds the remaining balance");
+    expect(session.balance() == 1, "rejected spin should preserve the balance");
+}
+
 } // namespace
 
 int main() {
@@ -94,6 +140,9 @@ int main() {
     test_seed_reproducibility();
     test_simulation_counters();
     test_zero_wager_is_safe();
+    test_session_validates_bet_and_balance();
+    test_session_spin_updates_balance();
+    test_session_rejects_spin_when_balance_is_too_low();
 
     if (failures != 0) {
         std::cerr << failures << " test assertion(s) failed.\n";

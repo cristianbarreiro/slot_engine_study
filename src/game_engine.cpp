@@ -10,12 +10,18 @@ GameEngine::GameEngine(GameConfig config, std::uint64_t seed)
       symbol_distribution_(0, kSymbolCount - 1) {}
 
 SpinResult GameEngine::spin() {
+    return spin(config_.bet_per_spin);
+}
+
+SpinResult GameEngine::spin(std::uint32_t bet_per_spin) {
     Reels reels{};
     for (Symbol& symbol : reels) {
         symbol = static_cast<Symbol>(symbol_distribution_(random_engine_));
     }
 
-    return evaluate_spin(reels, config_);
+    GameConfig spin_config = config_;
+    spin_config.bet_per_spin = bet_per_spin;
+    return evaluate_spin(reels, spin_config);
 }
 
 std::uint32_t GameEngine::bet_per_spin() const noexcept {

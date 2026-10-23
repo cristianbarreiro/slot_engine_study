@@ -1,6 +1,6 @@
 # Slot Engine Study (C++17)
 
-A small educational C++ project inspired by the kind of separation you may encounter in a game-math or simulation codebase. It is **not** a copy of 7Bridges Maths' internal software, and its toy payout rules are not a real or certified game model.
+A small educational C++ project inspired by the kind of separation you may encounter in a game-math or simulation codebase.
 
 The project deliberately keeps the core small so you can study its architecture, tests, memory behavior, and throughput without distractions from a GUI, network APIs, or third-party dependencies.
 
@@ -19,14 +19,25 @@ include/slot_engine/
   domain.hpp        # Symbol, fixed reel array, configuration, result
   evaluator.hpp     # Public interface for deterministic evaluation
   game_engine.hpp   # Owns RNG and produces spin results
+  game_session.hpp  # Application-layer balance, bet, and spin lifecycle
   simulator.hpp     # Aggregates metrics across many spins
 src/
   evaluator.cpp     # Pure rule evaluation
   game_engine.cpp   # Random spin generation
+  game_session.cpp  # Session validation and balance updates
   simulator.cpp     # Simulation loop and counters
   main.cpp          # CLI / output
  tests/
   test_engine.cpp   # Focused tests, no external test framework
+```
+
+The current code is a small layered modular monolith: it is one CMake project and one process, divided by responsibility rather than by services or a framework. The intended direction is:
+
+```text
+CLI adapter → Simulation runner ──┐
+                                  ├→ Game core (domain, rules, random engine)
+Future game UI → Application ─────┘
+                  (GameSession)
 ```
 
 The split is intentionally modest:
@@ -34,10 +45,11 @@ The split is intentionally modest:
 - **Domain:** the concepts and data types of this toy game.
 - **Evaluation:** pure function, deterministic and easy to unit test.
 - **Engine:** randomness and creation of a spin.
+- **Application:** coordinates a player's balance and bet around a spin, without owning UI concerns.
 - **Simulation:** repeated execution and aggregation of counters.
 - **CLI:** input/output only, not mixed into the domain logic.
 
-This is a simple layered design, not full MVC: the project has no GUI or controller. Keeping UI concerns out of the core would let a GUI or design tool call this code later through an appropriate interface.
+This is a starting point, not a reason to add more layers preemptively. The CLI simulator remains a direct path through the engine for benchmark runs; `GameSession` is the application path for an interactive game. A future GUI can call the application interface without putting rendering or input handling in the deterministic core. No GUI framework or extra scaffolding is needed for this increment.
 
 ## Why these data structures?
 
@@ -58,6 +70,8 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ./build/slot_simulator 1000000 42
 ```
+
+The `slot_engine_tests` target includes focused tests for the pure game rules and the `GameSession` bet validation, balance accounting, and rejected-spin behavior.
 
 Arguments are optional: `slot_simulator [spin_count] [seed]`. Defaults are 1,000,000 spins and seed 42.
 
@@ -130,11 +144,12 @@ Possible experiments:
 1. Read `domain.hpp`: types and representation.
 2. Read `evaluator.cpp`: deterministic business logic.
 3. Read `game_engine.cpp`: pseudo-random input and orchestration.
-4. Read `simulator.cpp`: hot loop and aggregation.
-5. Read `test_engine.cpp`: how expected behavior is checked.
-6. Run the app and tests.
-7. Run Valgrind / sanitizers.
-8. Change one behavior, add a test, then profile.
+4. Read `game_session.cpp`: application-level spin lifecycle and balance updates.
+5. Read `simulator.cpp`: hot loop and aggregation.
+6. Read `test_engine.cpp`: how expected behavior is checked.
+7. Run the app and tests.
+8. Run Valgrind / sanitizers.
+9. Change one behavior, add a test, then profile.
 
 ## Important limitation
 

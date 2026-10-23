@@ -33,8 +33,15 @@ add_executable(slot_simulator src/main.cpp)
 target_link_libraries(slot_simulator PRIVATE slot_engine)
 slot_apply_options(slot_simulator)
 
+add_library(slot_application
+    src/game_session.cpp
+)
+target_include_directories(slot_application PUBLIC include)
+target_link_libraries(slot_application PUBLIC slot_engine)
+slot_apply_options(slot_application)
+
 add_executable(slot_engine_tests tests/test_engine.cpp)
-target_link_libraries(slot_engine_tests PRIVATE slot_engine)
+target_link_libraries(slot_engine_tests PRIVATE slot_application)
 slot_apply_options(slot_engine_tests)
 
 enable_testing()

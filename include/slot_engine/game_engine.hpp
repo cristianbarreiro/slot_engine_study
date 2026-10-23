@@ -12,6 +12,7 @@ public:
     explicit GameEngine(GameConfig config, std::uint64_t seed);
 
     SpinResult spin();
+    SpinResult spin(std::uint32_t bet_per_spin);
     std::uint32_t bet_per_spin() const noexcept;
 
 private:
