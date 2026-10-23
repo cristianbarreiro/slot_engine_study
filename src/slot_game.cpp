@@ -133,6 +133,7 @@ int main() {
         return 1;
     }
     SetWindowMinSize(760, 620);
+    SetTargetFPS(60);
 
     Font font = GetFontDefault();
     const unsigned int default_font_texture = font.texture.id;
@@ -154,7 +155,6 @@ int main() {
     double spin_started = 0.0;
     std::string message = "Choose your bet and spin";
     Color message_color = kMuted;
-
 
     while (!WindowShouldClose()) {
         const double now = GetTime();
@@ -320,13 +320,9 @@ int main() {
                                panel_width, 20.0F * scale};
         draw_text_centered(font, "MATCH 3 SYMBOLS TO WIN   |   EDUCATIONAL SIMULATION ONLY",
                            footer, 11.0F * scale, kMuted);
+        // Raylib finalizes each frame (including buffer swap, input polling,
+        // and target-FPS pacing) through EndDrawing in its default build.
         EndDrawing();
-        SwapScreenBuffer();
-
-        const double frame_duration = GetTime() - frame_start;
-        if (frame_duration < kTargetFrameTime) {
-            WaitTime(kTargetFrameTime - frame_duration);
-        }
     }
 
     if (owns_font) {
