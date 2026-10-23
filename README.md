@@ -2,7 +2,7 @@
 
 A small educational C++ project inspired by the kind of separation you may encounter in a game-math or simulation codebase.
 
-The project deliberately keeps the core small so you can study its architecture, tests, memory behavior, and throughput without distractions from a GUI, network APIs, or third-party dependencies.
+The deterministic core stays small and independent. An optional Raylib application provides a playable, resizable arcade-style front end without changing the simulator or game math.
 
 ## What it does
 
@@ -10,6 +10,7 @@ The project deliberately keeps the core small so you can study its architecture,
 - Applies a simple payout rule when all three symbols match.
 - Accepts a reproducible random seed.
 - Runs a large number of spins and reports total wagered units, payout units, winning spins, simulated payout rate, elapsed time, and throughput.
+- Includes an optional graphical three-reel game with animated stops, selectable bets, balance and win displays.
 - Includes basic tests and builds with CMake.
 
 ## Architecture
@@ -49,7 +50,25 @@ The split is intentionally modest:
 - **Simulation:** repeated execution and aggregation of counters.
 - **CLI:** input/output only, not mixed into the domain logic.
 
-This is a starting point, not a reason to add more layers preemptively. The CLI simulator remains a direct path through the engine for benchmark runs; `GameSession` is the application path for an interactive game. A future GUI can call the application interface without putting rendering or input handling in the deterministic core. No GUI framework or extra scaffolding is needed for this increment.
+The CLI simulator remains a direct path through the engine for benchmark runs. The optional Raylib game uses `GameSession` for bet validation, balance changes, and the authoritative spin result. Reel motion is presentation-only and never recalculates a payout. Raylib is kept out of the core and is only required when the graphical target is enabled.
+
+## Graphical game
+
+The game uses a restrained navy, gold, and ivory palette, with a framed reel window, clear credit/bet/win cards, and a prominent SPIN control. The four original symbols are drawn with Raylib geometry, so no image pack is required. Reels scroll at a time-based rate and stop in sequence; bet controls and SPIN are disabled during the animation. The layout scales with window size and has a minimum window size.
+
+Controls use the mouse: choose an available bet (1, 2, 5, or 10 credits), then press **SPIN**. The game starts with 100 educational credits. Raylib's default font is used when `assets/ui/slot-display.ttf` is missing or unreadable. Sound is not currently used.
+
+Resources are separate from source code:
+
+```text
+assets/
+  symbols/       # optional symbol artwork; current symbols use vector drawing
+  backgrounds/   # optional scene art
+  ui/            # optional slot-display.ttf
+  sounds/        # reserved for a future sound pass
+```
+
+The project adds no bundled artwork or audio. When adding third-party resources, keep the files small and document their source and license in `assets/README.md`.
 
 ## Why these data structures?
 
@@ -72,6 +91,16 @@ ctest --test-dir build --output-on-failure
 ```
 
 The `slot_engine_tests` target includes focused tests for the pure game rules and the `GameSession` bet validation, balance accounting, and rejected-spin behavior.
+
+To also build the graphical game, install Raylib 5.x with its CMake package available, then enable the optional target:
+
+```bash
+cmake -S . -B build-game -DCMAKE_BUILD_TYPE=Release -DSLOT_BUILD_GAME=ON
+cmake --build build-game -j
+./build-game/slot_game
+```
+
+With the Visual Studio generator, run `cmake --build build-game --config Release` and launch `build-game/Release/slot_game.exe`. The graphical target is optional; the CLI simulator and tests do not require Raylib.
 
 Arguments are optional: `slot_simulator [spin_count] [seed]`. Defaults are 1,000,000 spins and seed 42.
 

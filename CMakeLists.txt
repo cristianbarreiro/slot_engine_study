@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(SlotEngineStudy VERSION 1.0.0 LANGUAGES CXX)
 
 option(SLOT_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(SLOT_BUILD_GAME "Build the optional Raylib graphical slot game" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,3 +47,19 @@ slot_apply_options(slot_engine_tests)
 
 enable_testing()
 add_test(NAME slot_engine_tests COMMAND slot_engine_tests)
+
+if(SLOT_BUILD_GAME)
+    find_package(raylib CONFIG REQUIRED)
+
+    add_executable(slot_game src/slot_game.cpp)
+    target_link_libraries(slot_game PRIVATE slot_application)
+    if(TARGET raylib)
+        target_link_libraries(slot_game PRIVATE raylib)
+    elseif(TARGET raylib::raylib)
+        target_link_libraries(slot_game PRIVATE raylib::raylib)
+    else()
+        message(FATAL_ERROR "Raylib was found, but its CMake target is unknown")
+    endif()
+    slot_apply_options(slot_game)
+    file(COPY assets DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
