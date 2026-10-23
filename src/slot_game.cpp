@@ -156,7 +156,11 @@ int main() {
     std::string message = "Choose your bet and spin";
     Color message_color = kMuted;
 
+    constexpr double kTargetFrameTime = 1.0 / 60.0;
+
     while (!WindowShouldClose()) {
+        PollInputEvents();
+        const double frame_start = GetTime();
         const double now = GetTime();
         const double spin_elapsed = now - spin_started;
         if (spinning && spin_elapsed >= kReelStopTimes.back() + 0.16) {
@@ -176,8 +180,15 @@ int main() {
 
         BeginDrawing();
         ClearBackground(kBackground);
-        DrawCircleGradient(screen_width / 2, screen_height / 3, 360.0F * scale,
-                           Color{28, 45, 64, 100}, kBackground);
+        DrawCircleGradient(
+            Vector2{
+                static_cast<float>(screen_width) * 0.5F,
+                static_cast<float>(screen_height) / 3.0F
+            },
+            360.0F * scale,
+            Color{28, 45, 64, 100},
+            kBackground
+        );
         DrawTextEx(font, "LUCKY THREE", {panel_left, top}, 30.0F * scale, 1.6F * scale, kGold);
         DrawTextEx(font, "ARCADE SLOT  /  C++17 STUDY GAME",
                    {panel_left, top + 39.0F * scale}, 13.0F * scale, 1.2F * scale, kMuted);
@@ -314,6 +325,12 @@ int main() {
         draw_text_centered(font, "MATCH 3 SYMBOLS TO WIN   |   EDUCATIONAL SIMULATION ONLY",
                            footer, 11.0F * scale, kMuted);
         EndDrawing();
+        SwapScreenBuffer();
+
+        const double frame_duration = GetTime() - frame_start;
+        if (frame_duration < kTargetFrameTime) {
+            WaitTime(kTargetFrameTime - frame_duration);
+        }
     }
 
     if (owns_font) {

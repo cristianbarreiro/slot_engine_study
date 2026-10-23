@@ -1,18 +1,25 @@
 # Build directories
 build/
+build*/
 bin/
 lib/
 out/
+cmake-build-*/
+vcpkg_installed/
 
-# CMake artifacts
+# CMake & MSBuild artifacts
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 *.cmake
 compile_commands.json
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
 
-# Object and library files
+# Object, library and debug files
 *.o
 *.obj
 *.so
@@ -20,11 +27,16 @@ compile_commands.json
 *.dll
 *.a
 *.lib
+*.pdb
+*.ilk
+*.idb
+*.exp
 
 # Executables
 *.exe
 slot_simulator
 slot_engine_tests
+slot_game
 
 # IDE and Editor files
 .vscode/

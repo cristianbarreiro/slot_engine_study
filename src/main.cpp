@@ -6,6 +6,7 @@
 #include <exception>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 int main(int argc, char* argv[]) {
     std::uint64_t spins = 1'000'000;
