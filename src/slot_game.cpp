@@ -156,11 +156,8 @@ int main() {
     std::string message = "Choose your bet and spin";
     Color message_color = kMuted;
 
-    constexpr double kTargetFrameTime = 1.0 / 60.0;
 
     while (!WindowShouldClose()) {
-        PollInputEvents();
-        const double frame_start = GetTime();
         const double now = GetTime();
         const double spin_elapsed = now - spin_started;
         if (spinning && spin_elapsed >= kReelStopTimes.back() + 0.16) {
@@ -324,13 +321,9 @@ int main() {
                                panel_width, 20.0F * scale};
         draw_text_centered(font, "MATCH 3 SYMBOLS TO WIN   |   EDUCATIONAL SIMULATION ONLY",
                            footer, 11.0F * scale, kMuted);
+        // EndDrawing handles buffer swapping, frame pacing, and input polling
+        // with Raylib's default frame-control configuration.
         EndDrawing();
-        SwapScreenBuffer();
-
-        const double frame_duration = GetTime() - frame_start;
-        if (frame_duration < kTargetFrameTime) {
-            WaitTime(kTargetFrameTime - frame_duration);
-        }
     }
 
     if (owns_font) {
